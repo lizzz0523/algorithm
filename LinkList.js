@@ -2,15 +2,17 @@ var LinkNode = require('./LinkNode'),
     extend = require('./utils').extend;
 
 function LinkList() {
-    this.init();
+    this._size = 0;
+    this._head = null;
+    this._tail = null;
+
+    this.initial.apply(this, arguments);
 }
 
 extend(LinkList.prototype, {
     // 初始化链表
-    init: function () {
-        this._size = 0;
-        this._head = null;
-        this._tail = null;
+    initial: function () {
+        // 允许你重载
     },
 
     // 销毁链表
@@ -87,12 +89,14 @@ extend(LinkList.prototype, {
     },
 
     each: function (callback) {
-        var node;
+        var node = this.head();
 
-        for (node = this.head(); node !== null; node = this.next(node)) {
+        while (node !== null) {
             if (callback.call(this, node) === false) {
                 break;
             }
+            
+            node = this.next(node);
         }
     },
 

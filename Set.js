@@ -2,48 +2,57 @@ var LinkList = require('./LinkList'),
     inherit = require('./utils').inherit;
 
 var Set = inherit(LinkList, {
-    join: function (data) {
-        var prev = this.tail();
+    initial: function (match) {
+        match = match || function (x, y) { return x === y };
 
+        if (typeof match !== 'function') {
+            throw Error('parameter match must be a function');
+        }
+
+        this._match = match;
+    },
+
+    join: function (data) {
         if (this.isMember(data)) {
             return -1;
         }
 
-        return this.insert(data, prev);
+        return this.insert(data, this.tail());
     },
 
     quit: function (data) {
-        var prev;
-
-        if (!this.isMember(data)) {
-            return null;
-        }
+        var prev = null;
 
         this.each(function (node) {
-            if (this.data(node) === data) {
+            if (this._match(this.data(node), data)) {
                 return false;
             }
 
             prev = node;
         });
 
-        return this.remove(prev);
+        if (prev !== null) {
+            return this.remove(prev);
+        } else {
+            return null;
+        }
     },
 
     isMember: function (data) {
-        var ret = false;
+        var exist = false;
 
         this.each(function (node) {
-            if (this.data(node) === data) {
-                ret = true;
+            if (this._match(this.data(node), data)) {
+                exist = true;
+                return false;
             }
         });
 
-        return ret;
+        return exist;
     },
 
     isSubset: function (set) {
-        var ret = true;
+        var exist = true;
 
         if (this.size() > set.size()) {
             return false;
@@ -51,19 +60,29 @@ var Set = inherit(LinkList, {
 
         this.each(function (node) {
             if (!set.isMember(this.data(node))) {
-                ret = false;
+                exist = false;
+                return false;
             }
         });
 
-        return ret;
+        return exist;
     },
 
     isEqual: function (set) {
+        var exist = true;
+
         if (this.size() !== set.size()) {
             return false;
         }
 
-        return this.isSubset(set);
+        this.each(function (node) {
+            if (!set.isMember(this.data(node))) {
+                exist = false;
+                return false;
+            }
+        });
+
+        return exist;
     }
 }, {
     union: function (set1, set2) {
