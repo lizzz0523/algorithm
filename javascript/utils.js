@@ -54,3 +54,23 @@ exports.inherit = function (Parent, proto, static) {
 
     return Child;
 };
+
+exports.pjwhash = function (str, size) {
+    var char,
+        temp,
+        val = 0,
+        i = -1,
+        len = str.length;
+
+    while (++i < len) {
+        char = str.charCodeAt(i);
+        val = (val << 4) + char;
+
+        if (temp = (val & 0xf0000000)) {
+            val = val ^ (temp >> 24);
+            val = val ^ temp;
+        }
+    }
+
+    return val % size;
+};
