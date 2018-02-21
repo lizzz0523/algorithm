@@ -12,6 +12,7 @@ fn main() {
 
     for _ in 0..len {
         // 这里不敢放肆用了u8，怕内存撑不住
+        // u8的内存占用大概在1.24GB
         vec.push(rng.gen::<u8>());
     }
 
