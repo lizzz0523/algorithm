@@ -1,7 +1,7 @@
 extern crate rand;
 
 use std::time::SystemTime;
-use rand::{thread_rng, Rng};
+use rand::{ thread_rng, Rng };
 
 fn main() {
     let now = SystemTime::now();
