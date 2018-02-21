@@ -1,0 +1,7 @@
+[package]
+name = "std_sort"
+version = "0.1.0"
+authors = ["Liz Chow <lizzzled@gmail.com>"]
+
+[dependencies]
+rand = "0.4"
