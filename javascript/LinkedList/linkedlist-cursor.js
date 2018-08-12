@@ -19,6 +19,9 @@ var llc;
     // 释放，也是把linkednode放回freelist中
     function allocCursor() {
         var p = cursorSpace[0].next;
+        if (!p) {
+            return p;
+        }
         cursorSpace[0].next = cursorSpace[p].next;
         cursorSpace[p].next = 0;
         return p;
@@ -45,6 +48,9 @@ var llc;
         function LinkedList() {
             var head = allocCursor();
             var tail = allocCursor();
+            if (!head || !tail) {
+                throw Error('out of space');
+            }
             $(head).data = null;
             $(head).next = tail;
             $(head).prev = 0;

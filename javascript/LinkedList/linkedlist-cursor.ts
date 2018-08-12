@@ -27,6 +27,10 @@ function printCursorSpace(): void {
 function allocCursor(): cursor {
     const p = cursorSpace[0].next
 
+    if (!p) {
+        return p
+    }
+
     cursorSpace[0].next = cursorSpace[p].next
     cursorSpace[p].next = 0
 
@@ -59,6 +63,10 @@ class LinkedList<T> {
     constructor() {
         let head = allocCursor()
         let tail = allocCursor()
+
+        if (!head || !tail) {
+            throw Error('out of space')
+        }
 
         $<T>(head).data = null
         $<T>(head).next = tail
