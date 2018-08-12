@@ -1,93 +1,121 @@
-var lln;
-(function (lln) {
-    var LinkedNode = /** @class */ (function () {
-        function LinkedNode() {
-            this.prev = null;
-            this.next = null;
-            this.data = null;
+"use strict";
+exports.__esModule = true;
+var LinkedNode = /** @class */ (function () {
+    function LinkedNode(data) {
+        this.data = data;
+        this.prev = this;
+        this.next = this;
+    }
+    LinkedNode.prototype.toString = function () {
+        return "" + this.data;
+    };
+    return LinkedNode;
+}());
+var LinkedList = /** @class */ (function () {
+    function LinkedList() {
+        this.size_ = 0;
+        this.head_ = new LinkedNode(null);
+    }
+    LinkedList.prototype.toString = function () {
+        var node = this.head_.next;
+        var paths = [];
+        while (node !== this.head_) {
+            paths.push("" + node);
+            node = node.next;
         }
-        LinkedNode.prototype.toString = function () {
-            return this.data + "\t" + this.next + "\t" + this.prev;
-        };
-        return LinkedNode;
-    }());
-    var LinkedList = /** @class */ (function () {
-        function LinkedList() {
-            this.head_ = new LinkedNode();
-            this.tail_ = new LinkedNode();
-            this.head_.next = this.tail_;
-            this.tail_.prev = this.head_;
+        return paths.join('->');
+    };
+    LinkedList.prototype.isEmpty = function () {
+        return this.size_ === 0;
+    };
+    LinkedList.prototype.size = function () {
+        return this.size_;
+    };
+    LinkedList.prototype.contains = function (data) {
+        return this.find_(data) !== this.head_;
+    };
+    LinkedList.prototype.clear = function () {
+        while (this.head_.next !== this.head_) {
+            this.remove_(this.head_.next);
         }
-        LinkedList.prototype.empty = function () {
-            return this.head_.next === this.tail_;
-        };
-        LinkedList.prototype.find = function (data) {
-            var node = this.head_.next;
-            while (node && node !== this.tail_ && node.data !== data) {
-                node = node.next;
-            }
-            return node === this.tail_ ? null : node;
-        };
-        LinkedList.prototype.remove_ = function (node) {
-            if (node === this.tail_ && node === this.head_) {
-                throw Error('no data');
-            }
-            var prev = node.prev;
-            var next = node.next;
-            if (prev)
-                prev.next = next;
-            if (next)
-                next.prev = prev;
-            var data = node.data;
-            node.data = null;
-            node.prev = null;
-            node.next = null;
-            return data;
-        };
-        LinkedList.prototype.insert_ = function (data, prev, next) {
-            var node = new LinkedNode();
-            next.prev = node;
-            prev.next = node;
-            node.prev = prev;
-            node.next = next;
-            node.data = data;
-        };
-        LinkedList.prototype.removeAfter_ = function (prev) {
-            var node = prev.next;
-            if (!node)
-                return null;
-            return this.remove_(node);
-        };
-        LinkedList.prototype.removeBefore_ = function (next) {
-            var node = next.prev;
-            if (!node)
-                return null;
-            return this.remove_(node);
-        };
-        LinkedList.prototype.insertBefore_ = function (data, prev) {
-            var next = prev.next;
-            if (!next)
-                return;
-            return this.insert_(data, prev, next);
-        };
-        LinkedList.prototype.insertAfter_ = function (data, next) {
-            var prev = next.prev;
-            if (!prev)
-                return;
-            return this.insert_(data, prev, next);
-        };
-        LinkedList.prototype.unshift = function (data) {
-            return this.insertAfter_(data, this.head_);
-        };
-        LinkedList.prototype.shift = function () {
-            return this.removeAfter_(this.head_);
-        };
-        LinkedList.prototype.push = function (data) {
-            return this.insertBefore_(data, this.tail_);
-        };
-        LinkedList.prototype.pop = function () {
-            return this.removeBefore_(this.tail_);
-        };
-        return LinkedList;
-    }());
-})(lln || (lln = {}));
+    };
+    LinkedList.prototype.front = function () {
+        if (this.isEmpty())
+            return null;
+        return this.head_.next.data;
+    };
+    LinkedList.prototype.back = function () {
+        if (this.isEmpty())
+            return null;
+        return this.head_.prev.data;
+    };
+    LinkedList.prototype.pushFront = function (data) {
+        return this.insert_(data, this.head_);
+    };
+    LinkedList.prototype.popFront = function () {
+        if (this.isEmpty())
+            return null;
+        return this.remove_(this.head_.next);
+    };
+    LinkedList.prototype.pushBack = function (data) {
+        return this.insert_(data, this.head_.prev);
+    };
+    LinkedList.prototype.popBack = function () {
+        if (this.isEmpty())
+            return null;
+        return this.remove_(this.head_.prev);
+    };
+    LinkedList.prototype.insert_ = function (data, prev) {
+        var next = prev.next;
+        var node = new LinkedNode(data);
+        node.prev = prev;
+        node.next = next;
+        prev.next = node;
+        next.prev = node;
+        this.size_++;
+    };
+    LinkedList.prototype.remove_ = function (node) {
+        var data = node.data;
+        var prev = node.prev;
+        var next = node.next;
+        prev.next = next;
+        next.prev = prev;
+        this.size_--;
+        return data;
+    };
+    LinkedList.prototype.find_ = function (data) {
+        var node = this.head_.next;
+        while (node !== this.head_ && node.data !== data) {
+            node = node.next;
+        }
+        return node;
+    };
+    return LinkedList;
+}());
+var list = new LinkedList();
+list.pushFront(1);
+list.pushFront(2);
+list.pushFront(3);
+list.pushFront(4);
+console.log(list.size());
+console.log(list.isEmpty());
+console.log(list.front());
+console.log(list.back());
+console.log(list + '');
+list.popFront();
+console.log(list + '');
+list.popFront();
+console.log(list + '');
+list.pushBack(4);
+list.pushBack(3);
+console.log(list + '');
+list.popBack();
+console.log(list + '');
+list.popBack();
+console.log(list + '');
+list.popBack();
+console.log(list + '');
+list.popBack();
+console.log(list + '');
+console.log(list.size());
+console.log(list.isEmpty());

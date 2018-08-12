@@ -1,110 +1,152 @@
-namespace lln {
+import { ILinkedList } from './export'
 
 class LinkedNode<T> {
-    prev: LinkedNode<T> | null = null
-    next: LinkedNode<T> | null = null
-    data: T | null = null
+    prev: LinkedNode<T>
+    next: LinkedNode<T>
+    data: T | null
+
+    constructor(data: T | null) {
+        this.data = data
+        this.prev = this
+        this.next = this
+    }
 
     toString(): string {
-        return `${ this.data }\t${ this.next }\t${ this.prev }`
+        return `${ this.data }`
     }
 }
 
-class LinkedList<T> {
+class LinkedList<T> implements ILinkedList<T> {
+    private size_: number
     private head_: LinkedNode<T>
-    private tail_: LinkedNode<T>
 
     constructor() {
-        this.head_ = new LinkedNode<T>()
-        this.tail_ = new LinkedNode<T>()
-
-        this.head_.next = this.tail_
-        this.tail_.prev = this.head_
+        this.size_ = 0
+        this.head_ = new LinkedNode<T>(null)
     }
 
-    empty() {
-        return this.head_.next === this.tail_
-    }
-
-    find(data: T): LinkedNode<T> | null {
+    toString() {
         let node = this.head_.next
+        let paths = []
 
-        while (node && node !== this.tail_ && node.data !== data) {
+        while (node !== this.head_) {
+            paths.push(`${ node }`)
             node = node.next
         }
 
-        return node === this.tail_ ? null : node
+        return paths.join('->')
     }
 
-    private remove_(node: LinkedNode<T>): T | null {
-        if (node === this.tail_ && node === this.head_) {
-            throw Error('no data')
+    isEmpty() {
+        return this.size_ === 0
+    }
+
+    size() {
+        return this.size_
+    }
+
+    contains(data: T) {
+        return this.find_(data) !== this.head_
+    }
+
+    clear() {
+        while (this.head_.next !== this.head_) {
+            this.remove_(this.head_.next)
         }
-        
+    }
+
+    front() {
+        if (this.isEmpty())
+            return null
+        return this.head_.next.data
+    }
+
+    back() {
+        if (this.isEmpty())
+            return null
+        return this.head_.prev.data
+    }
+
+    pushFront(data: T) {
+        return this.insert_(data, this.head_)
+    }
+
+    popFront() {
+        if (this.isEmpty())
+            return null
+        return this.remove_(this.head_.next)
+    }
+
+    pushBack(data: T) {
+        return this.insert_(data, this.head_.prev)
+    }
+
+    popBack() {
+        if (this.isEmpty())
+            return null
+        return this.remove_(this.head_.prev)
+    }
+
+    private insert_(data: T, prev: LinkedNode<T>) {
+        const next = prev.next
+        const node = new LinkedNode(data)
+
+        node.prev = prev
+        node.next = next
+        prev.next = node
+        next.prev = node
+
+        this.size_++
+    }
+
+    private remove_(node: LinkedNode<T>) {
+        const data = node.data
         const prev = node.prev
         const next = node.next
 
-        if (prev) prev.next = next
-        if (next) next.prev = prev
+        prev.next = next
+        next.prev = prev
 
-        const data = node.data
-        node.data = null
-        node.prev = null
-        node.next = null
+        this.size_--
 
         return data
     }
 
-    private insert_(data: T, prev: LinkedNode<T>, next: LinkedNode<T>): void {
-        const node = new LinkedNode<T>()
+    private find_(data: T) {
+        let node = this.head_.next
 
-        next.prev = node
-        prev.next = node
+        while (node !== this.head_ && node.data !== data) {
+            node = node.next
+        }
 
-        node.prev = prev
-        node.next = next
-        node.data = data
-    }
-
-    private removeAfter_(prev: LinkedNode<T>): T | null {
-        const node = prev.next
-        if (!node) return null
-        return this.remove_(node)
-    }
-
-    private removeBefore_(next: LinkedNode<T>): T | null {
-        const node = next.prev
-        if (!node) return null
-        return this.remove_(node)
-    }
-
-    private insertBefore_(data: T, prev: LinkedNode<T>) {
-        const next = prev.next
-        if (!next) return
-        return this.insert_(data, prev, next)
-    }
-
-    private insertAfter_(data: T, next: LinkedNode<T>) {
-        const prev = next.prev
-        if (!prev) return
-        return this.insert_(data, prev, next)
-    }
-
-    unshift(data: T): void {
-        return this.insertAfter_(data, this.head_)
-    }
-
-    shift(): T | null {
-        return this.removeAfter_(this.head_)
-    }
-
-    push(data: T): void {
-        return this.insertBefore_(data, this.tail_)
-    }
-
-    pop(): T | null {
-        return this.removeBefore_(this.tail_)
+        return node
     }
 }
 
-}
+const list = new LinkedList<number>()
+list.pushFront(1)
+list.pushFront(2)
+list.pushFront(3)
+list.pushFront(4)
+console.log(list.size())
+console.log(list.isEmpty())
+console.log(list.front())
+console.log(list.back())
+console.log(list + '')
+list.popFront()
+console.log(list + '')
+list.popFront()
+console.log(list + '')
+list.pushBack(4)
+list.pushBack(3)
+console.log(list + '')
+list.popBack()
+console.log(list + '')
+list.popBack()
+console.log(list + '')
+list.popBack()
+console.log(list + '')
+list.popBack()
+console.log(list + '')
+console.log(list.size())
+console.log(list.isEmpty())

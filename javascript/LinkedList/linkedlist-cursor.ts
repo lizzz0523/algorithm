@@ -1,13 +1,23 @@
-namespace llc {
+import { ILinkedList } from './export'
 
 type cursor = number
+
+class LinkedNode<T> {
+    prev: cursor = 0
+    next: cursor = 0
+    data: T | null = null
+
+    toString() {
+        return `${ this.data }`
+    }
+}
 
 const cursorSpace: LinkedNode<any>[] = []
 const maxLength = 10
 
 function initCursorSpace(): void {
     for (let i = 0; i < maxLength; i++) {
-        cursorSpace[i] = new LinkedNode()
+        cursorSpace[i] = new LinkedNode<any>()
         cursorSpace[i].next = (i + 1) % maxLength
     }
 }
@@ -16,7 +26,8 @@ function printCursorSpace(): void {
     console.log('slot\tdata\tnext\tprev')
 
     for (let i = 0; i < maxLength; i++) {
-        console.log(`${ i }\t${ cursorSpace[i] }`)
+        const node = cursorSpace[i]
+        console.log(`${ i }\t${ node.data }\t${ node.next }\t${ node.prev }`)
     }
 }
 
@@ -46,123 +57,127 @@ function $<T>(p: cursor): LinkedNode<T> {
     return cursorSpace[p]
 }
 
-class LinkedNode<T> {
-    prev: cursor = 0
-    next: cursor = 0
-    data: T | null = null
-
-    toString(): string {
-        return `${ this.data }\t${ this.next }\t${ this.prev }`
-    }
-}
-
-class LinkedList<T> {
+class LinkedList<T> implements ILinkedList<T> {
+    private size_: number
     private head_: cursor
-    private tail_: cursor
 
     constructor() {
         let head = allocCursor()
-        let tail = allocCursor()
 
-        if (!head || !tail) {
+        if (!head) {
             throw Error('out of space')
         }
 
-        $<T>(head).data = null
-        $<T>(head).next = tail
-        $<T>(head).prev = 0
+        $<T>(head).next = head
+        $<T>(head).prev = head
 
-        $<T>(tail).data = null
-        $<T>(tail).next = 0
-        $<T>(tail).prev = head
-
+        this.size_ = 0
         this.head_ = head
-        this.tail_ = tail
-    }
-    
-    empty(): boolean {
-        return $<T>(this.head_).next === this.tail_
     }
 
-    find(data: T): cursor {
+    toString() {
         let node = $<T>(this.head_).next
+        let paths = []
 
-        while (node !== this.tail_ && $<T>(node).data !== data) {
+        while (node !== this.head_) {
+            paths.push(`${ $<T>(node) }`)
             node = $<T>(node).next
         }
-        
-        return node
+
+        return paths.join('->')
     }
     
-    private remove_(node: cursor): T | null {
-        if (node === this.tail_ && node === this.head_) {
-            throw Error('no data')
-        }
-        
-        let prev = $<T>(node).prev
-        let next = $<T>(node).next
-
-        $<T>(prev).next = next
-        $<T>(next).prev = prev
-
-        const data = $<T>(node).data
-        $<T>(node).next = 0
-        $<T>(node).prev = 0
-        $<T>(node).data = null
-        freeCursor(node)
-
-        return data
+    isEmpty() {
+        return this.size_ === 0
     }
 
-    private insert_(data: T, prev: cursor, next: cursor): void {
+    size() {
+        return this.size_
+    }
+
+    contains(data: T) {
+        const node = this.find_(data)
+        return node === this.head_
+    }
+
+    clear() {
+        while ($<T>(this.head_).next !== this.head_) {
+            this.remove_($<T>(this.head_).next)
+        }
+    }
+
+    front() {
+        if (this.isEmpty())
+            return null
+        return $<T>($<T>(this.head_).next).data
+    }
+
+    back() {
+        if (this.isEmpty())
+            return null
+        return $<T>($<T>(this.head_).prev).data
+    }
+
+    pushFront(data: T) {
+        return this.insert_(data, this.head_)
+    }
+
+    popFront() {
+        if (this.isEmpty())
+            return null
+        return this.remove_($<T>(this.head_).next)
+    }
+
+    pushBack(data: T) {
+        return this.insert_(data, $<T>(this.head_).prev)
+    }
+
+    popBack() {
+        if (this.isEmpty())
+            return null
+        return this.remove_($<T>(this.head_).prev)
+    }
+
+    private insert_(data: T, prev: cursor) {
+        const next = $<T>(prev).next
         const node = allocCursor()
 
         if (!node) {
             throw Error('out of space')
         }
-        
-        $<T>(next).prev = node
-        $<T>(prev).next = node
 
-        $<T>(node).next = next
-        $<T>(node).prev = prev
         $<T>(node).data = data
+        $<T>(node).prev = prev
+        $<T>(node).next = next
+        $<T>(prev).next = node
+        $<T>(next).prev = node
+
+        this.size_++
     }
 
-    private removeAfter_(prev: cursor): T | null {
-        const node = $(prev).next
-        return this.remove_(node)
+    private remove_(node: cursor) {
+        const data = $<T>(node).data
+        const prev = $<T>(node).prev
+        const next = $<T>(node).next
+
+        $<T>(prev).next = next
+        $<T>(next).prev = prev
+
+        freeCursor(node)
+
+        this.size_--
+
+        return data
     }
 
-    private removeBefore_(next: cursor): T | null {
-        const node = $(next).prev
-        return this.remove_(node)
-    }
+    private find_(data: T) {
+        let node = $<T>(this.head_).next
 
-    private insertAfter_(data: T, prev: cursor): void {
-        const next = $<T>(prev).next
-        return this.insert_(data, prev, next)
-    }
+        while (node !== this.head_ && $<T>(node).data !== data) {
+            node = $<T>(node).next
+        }
 
-    private insertBefore_(data: T, next: cursor): void {
-        const prev = $<T>(next).prev
-        return this.insert_(data, prev, next)
-    }
-
-    unshift(data: T): void {
-        return this.insertAfter_(data, this.head_)
-    }
-
-    shift(): T | null {
-        return this.removeAfter_(this.head_)
-    }
-
-    push(data: T): void {
-        return this.insertBefore_(data, this.tail_)
-    }
-
-    pop(): T | null {
-        return this.removeBefore_(this.tail_)
+        return node
     }
 }
 
@@ -170,23 +185,30 @@ initCursorSpace()
 printCursorSpace()
 
 const list = new LinkedList<number>()
-
-list.push(10)
-list.push(30)
-list.push(100)
-list.unshift(500)
-printCursorSpace()
-
-list.pop()
-printCursorSpace()
-
-list.pop()
-printCursorSpace()
-
-list.pop()
-printCursorSpace()
-
-list.pop()
-printCursorSpace()
-
-}
+debugger
+list.pushFront(1)
+list.pushFront(2)
+list.pushFront(3)
+list.pushFront(4)
+console.log(list.size())
+console.log(list.isEmpty())
+console.log(list.front())
+console.log(list.back())
+console.log(list + '')
+list.popFront()
+console.log(list + '')
+list.popFront()
+console.log(list + '')
+list.pushBack(4)
+list.pushBack(3)
+console.log(list + '')
+list.popBack()
+console.log(list + '')
+list.popBack()
+console.log(list + '')
+list.popBack()
+console.log(list + '')
+list.popBack()
+console.log(list + '')
+console.log(list.size())
+console.log(list.isEmpty())
